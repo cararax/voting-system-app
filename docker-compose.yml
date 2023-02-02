@@ -1,0 +1,86 @@
+version: "3.8"
+services:
+  associate-service:
+    image: cararax/associate:1.1.0-SNAPSHOT
+    container_name: associate-container
+    restart: always
+    depends_on:
+      - postgres-db
+      - rabbitmq
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/
+      - SPRING_DATASOURCE_USERNAME=user
+      - SPRING_DATASOURCE_PASSWORD=password
+    ports:
+      - "8081:8081"
+
+  agenda-service:
+    image: cararax/agenda:1.1.0-SNAPSHOT
+    container_name: agenda-container
+    restart: always
+    depends_on:
+      - postgres-db
+      - rabbitmq
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/
+      - SPRING_DATASOURCE_USERNAME=user
+      - SPRING_DATASOURCE_PASSWORD=password
+      - SPRING_RABBITMQ_HOST=rabbitmq
+    ports:
+      - "8082:8082"
+
+  vote-service:
+    image: cararax/vote:1.1.0-SNAPSHOT
+    container_name: vote-container
+    restart: always
+    depends_on:
+      - postgres-db
+      - rabbitmq
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/
+      - SPRING_DATASOURCE_USERNAME=user
+      - SPRING_DATASOURCE_PASSWORD=password
+      - SPRING_RABBITMQ_HOST=rabbitmq
+      - FEIGN_CONFIG_ASSOCIATES_URL=associate-service:8081/associates
+      - FEIGN_CONFIG_AGENDA_URL=agenda-service:8082/agendas
+    ports:
+      - "8083:8083"
+
+  result-service:
+    image: cararax/result:1.1.0-SNAPSHOT
+    container_name: result-container
+    restart: always
+    depends_on:
+      - postgres-db
+      - rabbitmq
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/
+      - SPRING_DATASOURCE_USERNAME=user
+      - SPRING_DATASOURCE_PASSWORD=password
+      - SPRING_RABBITMQ_HOST=rabbitmq
+    ports:
+      - "8084:8084"
+
+  postgres-db:
+    image: postgres
+    container_name: postgres-db
+    restart: always
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-volume:/var/lib/postgresql/data
+
+  rabbitmq:
+    image: rabbitmq:3.11-management
+    container_name: rabbitmq
+    restart: always
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+volumes:
+  postgres-volume:
+
